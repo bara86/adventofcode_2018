@@ -72,5 +72,9 @@ fn main() -> std::io::Result<()> {
 
     println!("{:?} {}", minute_guard_slept_most, sleepiest_guard);
 
+    let vv = minutes_in_sleep.iter().max_by(|first, second| first.1.iter().max_by_key(|y| y.1).unwrap().1.cmp(second.1.iter().max_by_key(|y| y.1).unwrap().1));
+
+    println!("{:?}, {:?}", vv.unwrap().0, vv.unwrap().1.iter().max_by_key(|y| y.1));
+
     Ok(())
 }
