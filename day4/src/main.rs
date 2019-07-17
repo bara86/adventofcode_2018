@@ -55,11 +55,9 @@ fn main() -> std::io::Result<()> {
             assert_eq!(event.event, "wakes up");
             end_sleep_time = minute_regex.captures(&event.time).unwrap().get(1).map(|x| x.as_str()).unwrap().parse::<i32>().unwrap();
 
-            *sleepy_times.entry(guard.as_str().to_string()).or_insert(0) += end_sleep_time - start_sleep_time;
+            *sleepy_times.entry(guard.clone()).or_insert(0) += end_sleep_time - start_sleep_time;
 
-            let tmp = String::from(guard.as_str());
-            let def: HashMap<i32, i32> = HashMap::new();
-            let k = minutes_in_sleep.entry(tmp).or_insert(def);
+            let k = minutes_in_sleep.entry(guard.clone()).or_insert(HashMap::new());
 
             for i in start_sleep_time..end_sleep_time {
                 *k.entry(i).or_insert(0) += 1;
