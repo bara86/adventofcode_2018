@@ -67,16 +67,12 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    let mut v: Vec<(&String, &i32)> = sleepy_times.iter().collect();
-    v.sort_by(|first, second| first.1.cmp(second.1));
-
-    let sleepiest_guard = v.last().unwrap().0;
+    let sleepiest_guard = sleepy_times.iter().max_by_key(|x| x.1).unwrap().0;
 
     let sleep_time = minutes_in_sleep.get(sleepiest_guard).unwrap();
-    let mut v1: Vec<(&i32, &i32)> = sleep_time.iter().collect();
-    v1.sort_by(|first, second| first.1.cmp(second.1));
+    let minute_guard_slept_most = sleep_time.iter().max_by_key(|x| x.1).unwrap().0;
 
-    println!("{:?} {}", v1.last().unwrap(), sleepiest_guard);
+    println!("{:?} {}", minute_guard_slept_most, sleepiest_guard);
 
     Ok(())
 }
