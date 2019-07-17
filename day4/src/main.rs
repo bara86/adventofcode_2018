@@ -6,7 +6,6 @@ use std::io::BufRead;
 use std::collections::HashMap;
 use std::string::String;
 use regex::Regex;
-use std::io::Write;
 
 #[derive(Debug)]
 struct Event {
@@ -20,9 +19,9 @@ fn main() -> std::io::Result<()> {
     let reader = BufReader::new(f);
 
     let mut events = Vec::new();
-    
-    let date_regex = Regex::new(r"(\[\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\])").unwrap();
-    let event_regex = Regex::new(r"\] (.*)$").unwrap();
+
+    let date_regex = Regex::new(r"(\[\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}])").unwrap();
+    let event_regex = Regex::new(r"] (.*)$").unwrap();
     let guard_number_regex = Regex::new(r"#(\d+)").unwrap();
     let minute_regex = Regex::new(r":(\d+)").unwrap();
 
@@ -58,12 +57,12 @@ fn main() -> std::io::Result<()> {
 
             *sleepy_times.entry(guard.as_str().to_string()).or_insert(0) += end_sleep_time - start_sleep_time;
 
-            println!("{} {}", guard, sleepy_times[&guard]);
-
-            minutes_in_sleep.entry(&guard).or_insert(HashMap::new());
+            let tmp = String::from(guard.as_str());
+            let def: HashMap<i32, i32> = HashMap::new();
+            let k = minutes_in_sleep.entry(tmp).or_insert(def);
 
             for i in start_sleep_time..end_sleep_time {
-                *minutes_in_sleep[guard.as_str().to_string()].entry(i).or_insert(0) += 1;
+                *k.entry(i).or_insert(0) += 1;
             }
         }
     }
@@ -71,7 +70,13 @@ fn main() -> std::io::Result<()> {
     let mut v: Vec<(&String, &i32)> = sleepy_times.iter().collect();
     v.sort_by(|first, second| first.1.cmp(second.1));
 
-    println!("{:?}", v);
+    let sleepiest_guard = v.last().unwrap().0;
+
+    let sleep_time = minutes_in_sleep.get(sleepiest_guard).unwrap();
+    let mut v1: Vec<(&i32, &i32)> = sleep_time.iter().collect();
+    v1.sort_by(|first, second| first.1.cmp(second.1));
+
+    println!("{:?} {}", v1.last().unwrap(), sleepiest_guard);
 
     Ok(())
 }
