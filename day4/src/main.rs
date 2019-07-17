@@ -1,10 +1,7 @@
-extern crate regex;
-
-use std::fs;
-use std::io::BufReader;
-use std::io::BufRead;
 use std::collections::HashMap;
-use std::string::String;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
 use regex::Regex;
 
 #[derive(Debug)]
@@ -13,9 +10,8 @@ struct Event {
     event: String,
 }
 
-
 fn main() -> std::io::Result<()> {
-    let f = fs::File::open("input.txt")?;
+    let f = File::open("input.txt")?;
     let reader = BufReader::new(f);
 
     let mut events = Vec::new();
@@ -27,12 +23,20 @@ fn main() -> std::io::Result<()> {
 
     for line in reader.lines() {
         let line = line?;
-        let time = date_regex.captures(&line).unwrap().get(0).map(|x| x.as_str()).unwrap().to_string();
-        let event = event_regex.captures(&line).unwrap().get(1).map(|x| x.as_str()).unwrap().to_string();
-        
-        let ev = Event {time, event};
-        events.push(ev);
+        let time = date_regex
+            .captures(&line)
+            .unwrap()
+            .get(0)
+            .map(|x| x.as_str().to_string())
+            .unwrap();
+        let event = event_regex
+            .captures(&line)
+            .unwrap()
+            .get(1)
+            .map(|x| x.as_str().to_string())
+            .unwrap();
 
+        events.push(Event { time, event });
     }
 
     events.sort_by(|first, second| first.time.cmp(&second.time));
@@ -45,36 +49,54 @@ fn main() -> std::io::Result<()> {
     let mut end_sleep_time: i32;
 
     for event in events.iter() {
-        if guard_number_regex.is_match(event.event.as_str()) {
-            guard = guard_number_regex.captures(&event.event).unwrap().get(1).map(|x| x.as_str()).unwrap().to_string();
-        }
-        else if event.event == "falls asleep" {
-            start_sleep_time = minute_regex.captures(&event.time).unwrap().get(1).map(|x| x.as_str()).unwrap().parse::<i32>().unwrap();
-        }
-        else {
-            assert_eq!(event.event, "wakes up");
-            end_sleep_time = minute_regex.captures(&event.time).unwrap().get(1).map(|x| x.as_str()).unwrap().parse::<i32>().unwrap();
+        if event.event == "falls asleep" {
+            start_sleep_time = minute_regex
+                .captures(&event.time)
+                .unwrap()
+                .get(1)
+                .map(|x| x.as_str().parse::<i32>().unwrap())
+                .unwrap();
+        } else if event.event == "wakes up" {
+            end_sleep_time = minute_regex
+                .captures(&event.time)
+                .unwrap()
+                .get(1)
+                .map(|x| x.as_str().parse::<i32>().unwrap())
+                .unwrap();
 
             *sleepy_times.entry(guard.clone()).or_insert(0) += end_sleep_time - start_sleep_time;
 
-            let k = minutes_in_sleep.entry(guard.clone()).or_insert(HashMap::new());
+            let k = minutes_in_sleep
+                .entry(guard.clone())
+                .or_insert(HashMap::new());
 
             for i in start_sleep_time..end_sleep_time {
                 *k.entry(i).or_insert(0) += 1;
             }
+        } else {
+            guard = guard_number_regex
+                .captures(&event.event)
+                .unwrap()
+                .get(1)
+                .map(|x| x.as_str().to_string())
+                .unwrap();
         }
     }
 
-    let sleepiest_guard = sleepy_times.iter().max_by_key(|x| x.1).unwrap().0;
+    let sleepiest_guard = sleepy_times.iter().max_by_key(|(_, m)| *m).unwrap().0;
 
-    let sleep_time = minutes_in_sleep.get(sleepiest_guard).unwrap();
-    let minute_guard_slept_most = sleep_time.iter().max_by_key(|x| x.1).unwrap().0;
+    let sleep_time = &minutes_in_sleep[sleepiest_guard];
+    let minute_guard_slept_most = sleep_time.iter().max_by_key(|(_, m)| *m).unwrap().0;
 
     println!("{:?} {}", minute_guard_slept_most, sleepiest_guard);
 
-    let vv = minutes_in_sleep.iter().max_by(|first, second| first.1.iter().max_by_key(|y| y.1).unwrap().1.cmp(second.1.iter().max_by_key(|y| y.1).unwrap().1));
+    let vv = minutes_in_sleep
+        .iter()
+        .flat_map(|(guard, mins)| mins.iter().map(move |m| (guard, m)))
+        .max_by_key(|(_, m)| *m.1)
+        .unwrap();
 
-    println!("{:?}, {:?}", vv.unwrap().0, vv.unwrap().1.iter().max_by_key(|y| y.1));
+    println!("{:?}, {:?}", vv.0, vv.1);
 
     Ok(())
 }
