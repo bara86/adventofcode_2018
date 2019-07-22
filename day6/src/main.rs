@@ -34,12 +34,18 @@ fn main() -> std::io::Result<()> {
     let mut cattivoni = HashSet::new();
 
     dbg!((x_min, x_max, y_min, y_max));
+    let mut numeri = 0;
+
     for x in x_min..=x_max {
         for y in y_min..=y_max {
             let mut best = i32::max_value();
             let mut idx = None;
+
+            let mut sum = 0;
+
             for (i, coords) in coordinates.iter().enumerate() {
                 let dist = (coords.0 - x).abs() + (coords.1 - y).abs();
+                sum += dist;
 
                 if dist < best {
                     best = dist;
@@ -56,10 +62,15 @@ fn main() -> std::io::Result<()> {
                 }
                 *matrix.entry(idx).or_insert(0) += 1;
             }
+
+            if sum < 10000 {
+                numeri += 1;
+            }
         }
     }
 
     println!("{:?}", matrix.iter().filter(|(idx, v)| !cattivoni.contains(idx)).max_by_key(|(idx, v)| **v));
+    println!("{}", numeri);
 
     Ok(())
 }
